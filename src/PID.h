@@ -9,6 +9,7 @@ public:
   double p_error;
   double i_error;
   double d_error;
+  double prev_cte;
 
   /*
   * Coefficients
@@ -28,19 +29,29 @@ public:
   virtual ~PID();
 
   /*
-  * Initialize PID.
+  * Initializes PID.
   */
-  void Init(double Kp, double Ki, double Kd);
+  void Init(double K_p, double K_i, double K_d);
 
   /*
-  * Update the PID error variables given cross track error.
+  * Updates the PID error variables given cross track error.
   */
   void UpdateError(double cte);
 
   /*
-  * Calculate the total PID error.
+  * Calculates the total PID error.
   */
-  double TotalError();
+  double TotalError(double cte);
+
+  /*
+  * Calculates the steering angle.
+  */
+  double CalculateSteering();
+
+  /*
+  * Optimizes tau values (Kp, Ki, Kd).
+  */
+  void Twiddle();
 };
 
 #endif /* PID_H */
