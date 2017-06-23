@@ -1,92 +1,93 @@
-# CarND-Controls-PID
-Self-Driving Car Engineer Nanodegree Program
+# PID Controller
+[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
----
 
-## Dependencies
+In this project, my goal is to write a PID controller with hyperparameters optimized for a test track.
 
-* cmake >= 3.5
- * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools]((https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
-* [uWebSockets](https://github.com/uWebSockets/uWebSockets)
-  * Run either `./install-mac.sh` or `./install-ubuntu.sh`.
-  * If you install from source, checkout to commit `e94b6e1`, i.e.
-    ```
-    git clone https://github.com/uWebSockets/uWebSockets 
-    cd uWebSockets
-    git checkout e94b6e1
-    ```
-    Some function signatures have changed in v0.14.x. See [this PR](https://github.com/udacity/CarND-MPC-Project/pull/3) for more details.
-* Simulator. You can download these from the [project intro page](https://github.com/udacity/self-driving-car-sim/releases) in the classroom.
+## The Project
 
-There's an experimental patch for windows in this [PR](https://github.com/udacity/CarND-PID-Control-Project/pull/3)
+The steps to accomplish the goal in this project are the following:
 
-## Basic Build Instructions
+* Properly initialize the PID
+* Update error vector at each timestep
+* Convert PID output to steering input
+* Fine tune hyperparameters
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./pid`. 
+## PID
 
-## Editor Settings
+[PID controller](https://en.wikipedia.org/wiki/PID_controller) (Proportional Integral Derivative controller) is a control mechanism widely used in several industrial applications.
 
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
+One of it's many uses in robotics is to smoothen the robot's movement inputs in a way that it allows the robot to reach it's objective state with as little noise as possible.
 
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
+The output of a PID depends on three hyperparameters, one for each term of our controller (P-I-D). These hyperparameters are specific to each application, which in our case is driving a car smoothly around a test track.
 
-## Code Style
+### Proportional term
 
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
+> The proportional term produces an output value that is proportional to the current error value. The proportional response can be adjusted by multiplying the error by a constant Kp, called the proportional gain constant.
+The proportional term is given by:
 
-## Project Instructions and Rubric
+>P_out = Kp * crosstrack_error
 
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
+>A high proportional gain results in a large change in the output for a given change in the error. If the proportional gain is too high, the system can become unstable (see the section on loop tuning). In contrast, a small gain results in a small output response to a large input error, and a less responsive or less sensitive controller. If the proportional gain is too low, the control action may be too small when responding to system disturbances. Tuning theory and industrial practice indicate that the proportional term should contribute the bulk of the output change
 
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/e8235395-22dd-4b87-88e0-d108c5e5bbf4/concepts/6a4d8d42-6a04-4aa6-b284-1697c0fd6562)
-for instructions and the project rubric.
+The chart below shows how different values of Kp would impact the PID output.
+![alt text][image1]
+Source: wikipedia
 
-## Hints!
+### Integral term
 
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
+>The contribution from the integral term is proportional to both the magnitude of the error and the duration of the error. The integral in a PID controller is the sum of the instantaneous error over time and gives the accumulated offset that should have been corrected previously. The accumulated error is then multiplied by the integral gain (Ki) and added to the controller output.
 
-## Call for IDE Profiles Pull Requests
+>The integral term is given by
+I_out = Ki * integral_error
 
-Help your fellow students!
+The integral error is the integral of the error over the observation period. In our case where the interval between observations is constant, it gets simplified by the sum of all crosstrack errors observed.
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
+>The integral term accelerates the movement of the process towards setpoint and eliminates the residual steady-state error that occurs with a pure proportional controller. However, since the integral term responds to accumulated errors from the past, it can cause the present value to overshoot the setpoint value (see the section on loop tuning).
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+The chart below shows how different values of Ki would impact the PID output.
+![alt text][image2]
+Source: wikipedia
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
+### Differential term
 
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
+> The derivative of the process error is calculated by determining the slope of the error over time and multiplying this rate of change by the derivative gain Kd. The magnitude of the contribution of the derivative term to the overall control action is termed the derivative gain, Kd.
 
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
+>The derivative term is given by
+D_out = Kd * derivative_error
 
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
+
+The chart below shows how different values of Kd would impact the PID output.
+
+![alt text][image3]
+Source: wikipedia
+
+
+## Fine tuning hyperparameters
+
+These hyperparameters can be tuned using several different methods. I decided against spending much time in thinking about the best way to optimize these hyperparameters, and the reason will become obvious in the last section of this analysis.
+
+One of the suggested approaches to tune our hyperparameters is an automated trial and error method that Sebastian Thrun named "Twiddle". It changes each of the hyperparameters one at a time and analyzes the results of these changes. If they are better we keep the new parameters, if they are worse we change them again.
+
+Although not very scientific, the results usually converge to a local minimum that has good results for most applications.
+
+## Final considerations
+
+While PID controllers are extremely important in the industry, this static version is not good enough for a production self-driving car.
+
+The final product we have after optimizing the hyperparameters is a overfitted solution that may very well be useful for a single application, but will fail to react to changes in the environment and mechanical failures of the car - such as heavy winds or a steering bias being introduced after hitting a pothole.
+
+That is the reason why I decided against spending a lot of time in fine-tuning the hyperparameters.
+
+A better approach would be to have an Adaptive PID controller, that could constantly react to changes and ensure a smooth and safe driving condition under any given circumstances.
+
+
+## References
+[1] [PID controller](https://en.wikipedia.org/wiki/PID_controller)
+
+
+[//]: # (Image References)
+
+[image1]: ./images/Change_with_Kp.jpg "Kp comparison"
+[image2]: ./images/Change_with_Ki.png "Ki Comparison"
+[image3]: ./images/Change_with_Kd.png "Ki Comparison"
