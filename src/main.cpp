@@ -33,12 +33,8 @@ int main()
   uWS::Hub h;
 
   PID pid;
-  // TODO: Initialize the pid variable.
-  //double K_p = 0.2;
-  //double K_i = 0.004;
-  //double K_d = 3.0;
-
-  double K_p = 0.29282;
+  // works at 30mph
+  double K_p = 0.29282; 
   double K_i = 0.0058564;
   double K_d = 6.84567;
 
@@ -73,11 +69,7 @@ int main()
           pid.UpdateError(cte);
           steer_value = pid.CalculateOutput();
           throttle = pid.CalculateThrottle(speed, angle);
-          //pid.RestartSim(ws);
-          
-          // DEBUG
-          //std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
-          //std::cout << "Angle: " << angle << " Speed: " << speed << std::endl;
+
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
